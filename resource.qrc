@@ -1,0 +1,21 @@
+<RCC>
+    <qresource prefix="/resources">
+        <file>SubtitleBG.png</file>
+        <file>FOT-SeuratPro-B.otf</file>
+        <file>A.png</file>
+        <file>B.png</file>
+        <file>Back.png</file>
+        <file>LB.png</file>
+        <file>LStick.png</file>
+        <file>RB.png</file>
+        <file>RStick.png</file>
+        <file>Start.png</file>
+        <file>X.png</file>
+        <file>Y.png</file>
+        <file>LT.png</file>
+        <file>RT.png</file>
+        <file>icon.png</file>
+        <file>fcoEditorLogo.png</file>
+        <file>DPad.png</file>
+    </qresource>
+</RCC>
