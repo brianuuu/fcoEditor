@@ -31,7 +31,8 @@ SOURCES += \
         main.cpp \
         fcoeditorwindow.cpp \
     fco.cpp \
-    fcoaboutwindow.cpp
+    fcoaboutwindow.cpp \
+    zoomgraphicsview.cpp
 
 HEADERS += \
     databasegenerator.h \
@@ -39,7 +40,8 @@ HEADERS += \
         fcoeditorwindow.h \
     fco.h \
     fcoaboutwindow.h \
-    fte.h
+    fte.h \
+    zoomgraphicsview.h
 
 FORMS += \
     databasegenerator.ui \

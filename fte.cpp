@@ -143,10 +143,10 @@ bool fte::Import(const string &_fileName, string &_errorMsg)
 
     uint32_t characterCount = ReadInt(fteFile);
     m_buttonData.reserve(12);
-    m_data.reserve(characterCount - 32);
+    m_data.reserve(characterCount - 30);
     for (uint32_t i = 0; i < characterCount; i++)
     {
-        if (i >= 12 && i < 32)
+        if (i >= 12 && i < 30)
         {
             fseek(fteFile, 0x18, SEEK_CUR);
             continue;

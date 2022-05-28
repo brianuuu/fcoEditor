@@ -9,7 +9,7 @@ DatabaseGenerator::DatabaseGenerator(QWidget *parent) :
 
     m_graphic = new QGraphicsScene(this);
     ui->GV_Preview->setScene(m_graphic);
-    m_buttomPixmap = Q_NULLPTR;
+    m_buttonPixmap = Q_NULLPTR;
 
     m_settings = new QSettings("brianuuu", "fcoEditor", this);
     m_path = m_settings->value("DatabaseDefaultDirectory", QString()).toString();
@@ -82,7 +82,7 @@ void DatabaseGenerator::on_PB_Import_clicked()
                     m_graphic->setSceneRect(image.rect());
 
                     m_graphic->clear();
-                    m_buttomPixmap = m_graphic->addPixmap(QPixmap::fromImage(image));
+                    m_buttonPixmap = m_graphic->addPixmap(QPixmap::fromImage(image));
                 }
             }
 
@@ -100,14 +100,7 @@ void DatabaseGenerator::on_PB_Import_clicked()
             y->setValue(qRound(data.m_top * buttonImageHeight));
             width->setValue(qRound(data.m_right * buttonImageWidth - x->value()));
             height->setValue(qRound(data.m_bottom * buttonImageHeight - y->value()));
-
-            QImage rect(width->value(), height->value(), QImage::Format_RGBA8888);
-            rect.fill(0);
-            QPainter painter(&rect);
-            painter.setPen(Qt::red);
-            painter.drawRect(0, 0, width->value() - 1, height->value() - 1);
-            auto* pixmap = m_graphic->addPixmap(QPixmap::fromImage(rect));
-            pixmap->setPos(x->value(), y->value());
+            m_buttonHighlightPixmap[i] = m_graphic->addRect(x->value(), y->value(), width->value() - 1, height->value() - 1, QPen(Qt::red));
         }
 
         ui->TE_Characters->clear();
@@ -115,6 +108,8 @@ void DatabaseGenerator::on_PB_Import_clicked()
         {
             ui->TE_Characters->insertPlainText(QString::fromWCharArray(&data.m_wchar, 1));
         }
+
+        UpdateFontTextures();
     }
 }
 
@@ -131,6 +126,10 @@ void DatabaseGenerator::on_PB_Texture_clicked()
 void DatabaseGenerator::on_SB_FontSize_valueChanged(int arg1)
 {
     m_font.setPointSize(arg1);
+
+    QFontMetrics fontMetrics(m_font);
+    ui->SB_OffsetY->setValue(int(fontMetrics.height() * 20.0f / 28.0f));
+
     UpdateFontTextures();
 }
 
@@ -202,6 +201,8 @@ void DatabaseGenerator::on_SB_FontIndex_valueChanged(int arg1)
 
 void DatabaseGenerator::UpdateFontTextures()
 {
+    if (ui->LE_Font->text().isEmpty()) return;
+
     QImage image(512, 512, QImage::Format_RGB888);
     image.fill(0);
     QPainter painterImage(&image);

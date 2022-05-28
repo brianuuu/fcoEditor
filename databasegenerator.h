@@ -99,7 +99,8 @@ private:
 
     QFont m_font;
     QGraphicsScene* m_graphic;
-    QGraphicsPixmapItem* m_buttomPixmap;
+    QGraphicsPixmapItem* m_buttonPixmap;
+    QGraphicsRectItem* m_buttonHighlightPixmap[BT_COUNT];
     QVector<FontTextureData> m_fontTextures;
 };
 

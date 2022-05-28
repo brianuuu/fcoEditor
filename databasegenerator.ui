@@ -388,7 +388,7 @@
       </layout>
      </item>
      <item>
-      <widget class="QGraphicsView" name="GV_Preview">
+      <widget class="ZoomGraphicsView" name="GV_Preview">
        <property name="minimumSize">
         <size>
          <width>520</width>
@@ -407,6 +407,13 @@
    </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>ZoomGraphicsView</class>
+   <extends>QGraphicsView</extends>
+   <header>zoomgraphicsview.h</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>
