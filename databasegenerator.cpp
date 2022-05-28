@@ -128,6 +128,28 @@ void DatabaseGenerator::on_PB_Texture_clicked()
 
 }
 
+void DatabaseGenerator::on_SB_FontSize_valueChanged(int arg1)
+{
+    m_font.setPointSize(arg1);
+    UpdateFontTextures();
+}
+
+void DatabaseGenerator::on_SB_Spacing_valueChanged(int arg1)
+{
+    m_font.setLetterSpacing(QFont::SpacingType::AbsoluteSpacing, arg1);
+    UpdateFontTextures();
+}
+
+void DatabaseGenerator::on_SB_OffsetX_valueChanged(int arg1)
+{
+    UpdateFontTextures();
+}
+
+void DatabaseGenerator::on_SB_OffsetY_valueChanged(int arg1)
+{
+    UpdateFontTextures();
+}
+
 void DatabaseGenerator::on_PB_Font_clicked()
 {
     QString path = "";
@@ -154,6 +176,32 @@ void DatabaseGenerator::on_PB_Font_clicked()
     m_font.setPointSize(ui->SB_FontSize->value());
     m_font.setLetterSpacing(QFont::SpacingType::AbsoluteSpacing, ui->SB_Spacing->value());
 
+    QFontMetrics fontMetrics(m_font);
+    ui->SB_OffsetY->setValue(int(fontMetrics.height() * 20.0f / 28.0f));
+
+    UpdateFontTextures();
+}
+
+void DatabaseGenerator::on_RB_Button_toggled(bool checked)
+{
+
+}
+
+void DatabaseGenerator::on_RB_Font_toggled(bool checked)
+{
+    if (checked)
+    {
+        on_SB_FontIndex_valueChanged(ui->SB_FontIndex->value());
+    }
+}
+
+void DatabaseGenerator::on_SB_FontIndex_valueChanged(int arg1)
+{
+    UpdateDrawFontTexture(arg1);
+}
+
+void DatabaseGenerator::UpdateFontTextures()
+{
     QImage image(512, 512, QImage::Format_RGB888);
     image.fill(0);
     QPainter painterImage(&image);
@@ -163,7 +211,6 @@ void DatabaseGenerator::on_PB_Font_clicked()
     m_fontTextures.clear();
     QFontMetrics fontMetrics(m_font);
     int maxCountY = 512 / fontMetrics.height();
-    ui->SB_OffsetY->setValue(int(fontMetrics.height() * 20.0f / 28.0f));
 
     QImage highlight(512, 512, QImage::Format_RGBA8888);
     highlight.fill(0);
@@ -215,26 +262,19 @@ void DatabaseGenerator::on_PB_Font_clicked()
     }
 
     ui->SB_FontIndex->setMaximum(m_fontTextures.size() - 1);
-    ui->SB_FontIndex->setValue(0);
-    ui->RB_Font->setChecked(true);
-    on_SB_FontIndex_valueChanged(0);
+    UpdateDrawFontTexture(0);
 }
 
-void DatabaseGenerator::on_SB_FontIndex_valueChanged(int arg1)
+void DatabaseGenerator::UpdateDrawFontTexture(int id)
 {
-    if (!m_fontTextures.isEmpty() && arg1 < m_fontTextures.size())
+    ui->RB_Font->setChecked(true);
+    ui->SB_FontIndex->setValue(id);
+
+    if (!m_fontTextures.isEmpty() && id < m_fontTextures.size())
     {
         m_graphic->clear();
         m_graphic->setSceneRect(0,0,512,512);
-        m_graphic->addPixmap(QPixmap::fromImage(m_fontTextures[arg1].m_texture));
-        m_graphic->addPixmap(QPixmap::fromImage(m_fontTextures[arg1].m_highlight));
-    }
-}
-
-void DatabaseGenerator::on_RB_Font_toggled(bool checked)
-{
-    if (checked)
-    {
-        on_SB_FontIndex_valueChanged(ui->SB_FontIndex->value());
+        m_graphic->addPixmap(QPixmap::fromImage(m_fontTextures[id].m_texture));
+        m_graphic->addPixmap(QPixmap::fromImage(m_fontTextures[id].m_highlight));
     }
 }

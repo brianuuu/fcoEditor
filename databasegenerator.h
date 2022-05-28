@@ -70,14 +70,24 @@ public:
 
     void closeEvent (QCloseEvent *event);
 
+    void UpdateFontTextures();
+    void UpdateDrawFontTexture(int id);
+
 private slots:
     void on_PB_Import_clicked();
     void on_PB_Export_clicked();
 
     void on_PB_Texture_clicked();
     void on_PB_Font_clicked();
-    void on_SB_FontIndex_valueChanged(int arg1);
+
+    void on_SB_FontSize_valueChanged(int arg1);
+    void on_SB_Spacing_valueChanged(int arg1);
+    void on_SB_OffsetX_valueChanged(int arg1);
+    void on_SB_OffsetY_valueChanged(int arg1);
+
+    void on_RB_Button_toggled(bool checked);
     void on_RB_Font_toggled(bool checked);
+    void on_SB_FontIndex_valueChanged(int arg1);
 
 private:
     Ui::DatabaseGenerator *ui;
