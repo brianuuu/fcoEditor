@@ -25,19 +25,24 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 
 SOURCES += \
+    databasegenerator.cpp \
     eventcaptioneditor.cpp \
+    fte.cpp \
         main.cpp \
         fcoeditorwindow.cpp \
     fco.cpp \
     fcoaboutwindow.cpp
 
 HEADERS += \
+    databasegenerator.h \
     eventcaptioneditor.h \
         fcoeditorwindow.h \
     fco.h \
-    fcoaboutwindow.h
+    fcoaboutwindow.h \
+    fte.h
 
 FORMS += \
+    databasegenerator.ui \
     eventcaptioneditor.ui \
         fcoeditorwindow.ui \
     fcoaboutwindow.ui

@@ -208,6 +208,10 @@ void fcoEditorWindow::closeEvent (QCloseEvent *event)
     {
         m_eventCaptionEditor->close();
     }
+    if (m_databaseGenerator != Q_NULLPTR)
+    {
+        m_databaseGenerator->close();
+    }
     event->accept();
 }
 
@@ -523,6 +527,20 @@ void fcoEditorWindow::on_actionEvent_Caption_Editor_cap_triggered()
 
     m_eventCaptionEditor->show();
     m_eventCaptionEditor->raise();
+}
+
+//---------------------------------------------------------------------------
+// Open Database Generator
+//---------------------------------------------------------------------------
+void fcoEditorWindow::on_actionDatabase_Generator_fte_triggered()
+{
+    if (m_databaseGenerator == Q_NULLPTR)
+    {
+        m_databaseGenerator = new DatabaseGenerator();
+    }
+
+    m_databaseGenerator->show();
+    m_databaseGenerator->raise();
 }
 
 //---------------------------------------------------------------------------

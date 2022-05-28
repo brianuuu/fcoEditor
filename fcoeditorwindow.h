@@ -24,6 +24,7 @@
 
 #include "fco.h"
 #include "eventcaptioneditor.h"
+#include "databasegenerator.h"
 
 using namespace std;
 
@@ -57,6 +58,7 @@ private slots:
     void on_actionAdd_Unsupported_Characters_triggered();
     void on_actionAbout_Qt_triggered();
     void on_actionEvent_Caption_Editor_cap_triggered();
+    void on_actionDatabase_Generator_fte_triggered();
 
     // Push buttons
     void on_PB_Find_clicked();
@@ -131,6 +133,7 @@ private:
     Ui::fcoEditorWindow *ui;
     QSettings *m_settings;
     EventCaptionEditor *m_eventCaptionEditor = Q_NULLPTR;
+    DatabaseGenerator *m_databaseGenerator = Q_NULLPTR;
 
     fco* m_fco;
     QString m_path;

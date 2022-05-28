@@ -250,8 +250,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>487</width>
-             <height>158</height>
+             <width>499</width>
+             <height>203</height>
             </rect>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout">
@@ -1186,7 +1186,7 @@
         <rect>
          <x>0</x>
          <y>0</y>
-         <width>1000</width>
+         <width>1010</width>
          <height>108</height>
         </rect>
        </property>
@@ -1231,7 +1231,7 @@
      <x>0</x>
      <y>0</y>
      <width>1024</width>
-     <height>23</height>
+     <height>19</height>
     </rect>
    </property>
    <property name="font">
@@ -1261,6 +1261,7 @@
      <string>Tools</string>
     </property>
     <addaction name="actionEvent_Caption_Editor_cap"/>
+    <addaction name="actionDatabase_Generator_fte"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuTools"/>
@@ -1319,6 +1320,11 @@
   <action name="actionEvent_Caption_Editor_cap">
    <property name="text">
     <string>Event Caption Editor (.cap)</string>
+   </property>
+  </action>
+  <action name="actionDatabase_Generator_fte">
+   <property name="text">
+    <string>Database Generator (.fte)</string>
    </property>
   </action>
  </widget>
