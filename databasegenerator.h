@@ -70,7 +70,9 @@ public:
 
     void closeEvent (QCloseEvent *event);
 
+    void ClearGraphicScene();
     void UpdateFontTextures();
+    void UpdateDrawButtonTexture();
     void UpdateDrawFontTexture(int id);
 
 private slots:
@@ -79,6 +81,8 @@ private slots:
 
     void on_PB_Texture_clicked();
     void on_PB_Font_clicked();
+
+    void on_GridLayout_SpinBox_valueChanged(int arg1);
 
     void on_SB_FontSize_valueChanged(int arg1);
     void on_SB_Spacing_valueChanged(int arg1);

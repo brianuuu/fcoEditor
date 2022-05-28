@@ -21,11 +21,16 @@ DatabaseGenerator::DatabaseGenerator(QWidget *parent) :
         QSpinBox* y = new QSpinBox(this);
         QSpinBox* width = new QSpinBox(this);
         QSpinBox* height = new QSpinBox(this);
+        connect(x, SIGNAL(valueChanged(int)), this, SLOT(on_GridLayout_SpinBox_valueChanged(int)));
+        connect(y, SIGNAL(valueChanged(int)), this, SLOT(on_GridLayout_SpinBox_valueChanged(int)));
+        connect(width, SIGNAL(valueChanged(int)), this, SLOT(on_GridLayout_SpinBox_valueChanged(int)));
+        connect(height, SIGNAL(valueChanged(int)), this, SLOT(on_GridLayout_SpinBox_valueChanged(int)));
 
         ui->GL_Button->addWidget(x, i + 1, CT_X);
         ui->GL_Button->addWidget(y, i + 1, CT_Y);
         ui->GL_Button->addWidget(width, i + 1, CT_Width);
         ui->GL_Button->addWidget(height, i + 1, CT_Height);
+        m_buttonHighlightPixmap[i] = Q_NULLPTR;
     }
 }
 
@@ -59,49 +64,7 @@ void DatabaseGenerator::on_PB_Import_clicked()
     string errorMsg;
     if (!m_fte.Import(fteFile.toStdString(), errorMsg))
     {
-        int buttonImageWidth = 0;
-        int buttonImageHeight = 0;
-        ui->LE_ButtonTexture->clear();
-        for (int i = 0; i < BT_COUNT; i++)
-        {
-            fte::Data const& data = m_fte.m_buttonData[i];
-
-            if (ui->LE_ButtonTexture->text().isEmpty())
-            {
-                ui->LE_ButtonTexture->setText(QString::fromStdString(m_fte.m_textureNames[data.m_textureIndex]));
-                QString buttomImagePath = m_path + "/" + ui->LE_ButtonTexture->text() + ".dds";
-                if (!QFile::exists(buttomImagePath))
-                {
-                    QMessageBox::warning(this, "Import", "Unable to find button texture " + ui->LE_ButtonTexture->text() + ".dds");
-                }
-                else
-                {
-                    QImage image(buttomImagePath);
-                    buttonImageWidth = image.width();
-                    buttonImageHeight = image.height();
-                    m_graphic->setSceneRect(image.rect());
-
-                    m_graphic->clear();
-                    m_buttonPixmap = m_graphic->addPixmap(QPixmap::fromImage(image));
-                }
-            }
-
-            QSpinBox* x = qobject_cast<QSpinBox*>(ui->GL_Button->itemAtPosition(i + 1, CT_X)->widget());
-            QSpinBox* y = qobject_cast<QSpinBox*>(ui->GL_Button->itemAtPosition(i + 1, CT_Y)->widget());
-            QSpinBox* width = qobject_cast<QSpinBox*>(ui->GL_Button->itemAtPosition(i + 1, CT_Width)->widget());
-            QSpinBox* height = qobject_cast<QSpinBox*>(ui->GL_Button->itemAtPosition(i + 1, CT_Height)->widget());
-
-            x->setRange(0, buttonImageWidth);
-            y->setRange(0, buttonImageHeight);
-            width->setRange(0, buttonImageWidth);
-            height->setRange(0, buttonImageHeight);
-
-            x->setValue(qRound(data.m_left * buttonImageWidth));
-            y->setValue(qRound(data.m_top * buttonImageHeight));
-            width->setValue(qRound(data.m_right * buttonImageWidth - x->value()));
-            height->setValue(qRound(data.m_bottom * buttonImageHeight - y->value()));
-            m_buttonHighlightPixmap[i] = m_graphic->addRect(x->value(), y->value(), width->value() - 1, height->value() - 1, QPen(Qt::red));
-        }
+        UpdateDrawButtonTexture();
 
         ui->TE_Characters->clear();
         for (fte::Data const& data : m_fte.m_data)
@@ -114,11 +77,6 @@ void DatabaseGenerator::on_PB_Import_clicked()
 }
 
 void DatabaseGenerator::on_PB_Export_clicked()
-{
-
-}
-
-void DatabaseGenerator::on_PB_Texture_clicked()
 {
 
 }
@@ -147,6 +105,39 @@ void DatabaseGenerator::on_SB_OffsetX_valueChanged(int arg1)
 void DatabaseGenerator::on_SB_OffsetY_valueChanged(int arg1)
 {
     UpdateFontTextures();
+}
+
+void DatabaseGenerator::on_PB_Texture_clicked()
+{
+    QString path = "";
+    if (!m_path.isEmpty())
+    {
+        path = m_path;
+    }
+
+    QString ddsFile = QFileDialog::getOpenFileName(this, tr("Open"), path, "DDS File (*.dds)");
+    if (ddsFile == Q_NULLPTR) return;
+
+    // Save directory
+    QFileInfo info(ddsFile);
+    m_path = info.dir().absolutePath();
+
+    // Set dds name
+    int index = ddsFile.lastIndexOf('\\');
+    if (index == -1) index = ddsFile.lastIndexOf('/');
+
+    QString textureName = ddsFile.mid(index + 1);
+    textureName = textureName.mid(0, textureName.size() - 4);
+
+    ui->LE_ButtonTexture->setText(textureName);
+    if (!m_fte.m_buttonData.empty())
+    {
+        fte::Data const& data = m_fte.m_buttonData[0];
+        m_fte.m_textureNames[data.m_textureIndex] = textureName.toStdString();
+    }
+
+    ClearGraphicScene();
+    UpdateDrawButtonTexture();
 }
 
 void DatabaseGenerator::on_PB_Font_clicked()
@@ -181,22 +172,59 @@ void DatabaseGenerator::on_PB_Font_clicked()
     UpdateFontTextures();
 }
 
+void DatabaseGenerator::on_GridLayout_SpinBox_valueChanged(int arg1)
+{
+    if (!m_buttonPixmap)
+    {
+        UpdateDrawButtonTexture();
+    }
+
+    QSpinBox* sb = qobject_cast<QSpinBox*>(sender());
+    int idx = ui->GL_Button->indexOf(sb);
+    if (idx >= 0)
+    {
+        int row, column, rowSpan, columnSpan;
+        ui->GL_Button->getItemPosition(idx, &row, &column, &rowSpan, &columnSpan);
+        if (row > 0 && column > 0 && m_buttonHighlightPixmap[row - 1])
+        {
+            QSpinBox* x = qobject_cast<QSpinBox*>(ui->GL_Button->itemAtPosition(row, CT_X)->widget());
+            QSpinBox* y = qobject_cast<QSpinBox*>(ui->GL_Button->itemAtPosition(row, CT_Y)->widget());
+            QSpinBox* width = qobject_cast<QSpinBox*>(ui->GL_Button->itemAtPosition(row, CT_Width)->widget());
+            QSpinBox* height = qobject_cast<QSpinBox*>(ui->GL_Button->itemAtPosition(row, CT_Height)->widget());
+            m_buttonHighlightPixmap[row - 1]->setRect(x->value() + 0.5, y->value() + 0.5, width->value() - 1, height->value() - 1);
+        }
+    }
+}
+
 void DatabaseGenerator::on_RB_Button_toggled(bool checked)
 {
-
+    if (checked)
+    {
+        UpdateDrawButtonTexture();
+    }
 }
 
 void DatabaseGenerator::on_RB_Font_toggled(bool checked)
 {
     if (checked)
     {
-        on_SB_FontIndex_valueChanged(ui->SB_FontIndex->value());
+        UpdateDrawFontTexture(ui->SB_FontIndex->value());
     }
 }
 
 void DatabaseGenerator::on_SB_FontIndex_valueChanged(int arg1)
 {
     UpdateDrawFontTexture(arg1);
+}
+
+void DatabaseGenerator::ClearGraphicScene()
+{
+    m_graphic->clear();
+    m_buttonPixmap = Q_NULLPTR;
+    for (int i = 0; i < BT_COUNT; i++)
+    {
+        m_buttonHighlightPixmap[i] = Q_NULLPTR;
+    }
 }
 
 void DatabaseGenerator::UpdateFontTextures()
@@ -266,6 +294,61 @@ void DatabaseGenerator::UpdateFontTextures()
     UpdateDrawFontTexture(0);
 }
 
+void DatabaseGenerator::UpdateDrawButtonTexture()
+{
+    if (m_fte.m_buttonData.empty()) return;
+
+    ui->RB_Button->setChecked(true);
+    if (m_buttonPixmap)
+    {
+        ClearGraphicScene();
+    }
+
+    int buttonImageWidth = 0;
+    int buttonImageHeight = 0;
+    ui->LE_ButtonTexture->clear();
+    for (int i = 0; i < BT_COUNT; i++)
+    {
+        fte::Data const& data = m_fte.m_buttonData[i];
+
+        if (ui->LE_ButtonTexture->text().isEmpty())
+        {
+            ui->LE_ButtonTexture->setText(QString::fromStdString(m_fte.m_textureNames[data.m_textureIndex]));
+            QString buttomImagePath = m_path + "/" + ui->LE_ButtonTexture->text() + ".dds";
+            if (!QFile::exists(buttomImagePath))
+            {
+                QMessageBox::warning(this, "Import", "Unable to find button texture " + ui->LE_ButtonTexture->text() + ".dds");
+            }
+            else
+            {
+                QImage image(buttomImagePath);
+                buttonImageWidth = image.width();
+                buttonImageHeight = image.height();
+                m_graphic->setSceneRect(image.rect());
+
+                ClearGraphicScene();
+                m_buttonPixmap = m_graphic->addPixmap(QPixmap::fromImage(image));
+            }
+        }
+
+        QSpinBox* x = qobject_cast<QSpinBox*>(ui->GL_Button->itemAtPosition(i + 1, CT_X)->widget());
+        QSpinBox* y = qobject_cast<QSpinBox*>(ui->GL_Button->itemAtPosition(i + 1, CT_Y)->widget());
+        QSpinBox* width = qobject_cast<QSpinBox*>(ui->GL_Button->itemAtPosition(i + 1, CT_Width)->widget());
+        QSpinBox* height = qobject_cast<QSpinBox*>(ui->GL_Button->itemAtPosition(i + 1, CT_Height)->widget());
+
+        x->setRange(0, buttonImageWidth);
+        y->setRange(0, buttonImageHeight);
+        width->setRange(0, buttonImageWidth);
+        height->setRange(0, buttonImageHeight);
+
+        x->setValue(qRound(data.m_left * buttonImageWidth));
+        y->setValue(qRound(data.m_top * buttonImageHeight));
+        width->setValue(qRound(data.m_right * buttonImageWidth - x->value()));
+        height->setValue(qRound(data.m_bottom * buttonImageHeight - y->value()));
+        m_buttonHighlightPixmap[i] = m_graphic->addRect(x->value() + 0.5, y->value() + 0.5, width->value() - 1, height->value() - 1, QPen(Qt::red));
+    }
+}
+
 void DatabaseGenerator::UpdateDrawFontTexture(int id)
 {
     ui->RB_Font->setChecked(true);
@@ -273,7 +356,7 @@ void DatabaseGenerator::UpdateDrawFontTexture(int id)
 
     if (!m_fontTextures.isEmpty() && id < m_fontTextures.size())
     {
-        m_graphic->clear();
+        ClearGraphicScene();
         m_graphic->setSceneRect(0,0,512,512);
         m_graphic->addPixmap(QPixmap::fromImage(m_fontTextures[id].m_texture));
         m_graphic->addPixmap(QPixmap::fromImage(m_fontTextures[id].m_highlight));

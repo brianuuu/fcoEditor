@@ -73,7 +73,11 @@
                </widget>
               </item>
               <item>
-               <widget class="QLineEdit" name="LE_ButtonTexture"/>
+               <widget class="QLineEdit" name="LE_ButtonTexture">
+                <property name="readOnly">
+                 <bool>true</bool>
+                </property>
+               </widget>
               </item>
               <item>
                <widget class="QToolButton" name="PB_Texture">
@@ -313,7 +317,7 @@
                  <number>50</number>
                 </property>
                 <property name="value">
-                 <number>-2</number>
+                 <number>-3</number>
                 </property>
                </widget>
               </item>
