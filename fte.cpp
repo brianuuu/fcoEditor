@@ -123,6 +123,11 @@ void fte::WriteAscii
 
 bool fte::Import(const string &_fileName, string &_errorMsg)
 {
+    m_buttonTextureName.clear();
+    m_textures.clear();
+    m_buttonData.clear();
+    m_data.clear();
+
     FILE* fteFile;
     fopen_s(&fteFile, _fileName.c_str(), "rb");
     if (!fteFile)
@@ -137,8 +142,11 @@ bool fte::Import(const string &_fileName, string &_errorMsg)
     uint32_t textureCount = ReadInt(fteFile);
     for (uint32_t i = 0; i < textureCount; i++)
     {
-        m_textureNames.push_back(ReadAscii(fteFile));
-        fseek(fteFile, 0x8, SEEK_CUR);
+        Texture texture;
+        texture.m_name = ReadAscii(fteFile);
+        texture.m_width = ReadInt(fteFile);
+        texture.m_height = ReadInt(fteFile);
+        m_textures.push_back(texture);
     }
 
     uint32_t characterCount = ReadInt(fteFile);
@@ -153,14 +161,7 @@ bool fte::Import(const string &_fileName, string &_errorMsg)
         }
 
         Data data;
-        data.m_textureIndex = ReadInt(fteFile);
-        data.m_left = ReadFloat(fteFile);
-        data.m_top = ReadFloat(fteFile);
-        data.m_right = ReadFloat(fteFile);
-        data.m_bottom = ReadFloat(fteFile);
-        fread(&data.m_wchar, 2, 1, fteFile);
-        data.m_wchar = _byteswap_ushort(data.m_wchar);
-        fseek(fteFile, 0x2, SEEK_CUR);
+        data.Read(fteFile);
 
         if (i < 12)
         {
@@ -173,10 +174,96 @@ bool fte::Import(const string &_fileName, string &_errorMsg)
     }
 
     fclose(fteFile);
+    return true;
 }
 
-bool fte::Export(const string &_fileName, string &_errorMsg)
+bool fte::Export(const string &_path, string &_errorMsg)
 {
+    FILE* output;
+    fopen_s(&output, (_path + "/All.fte").c_str(), "wb");
 
+    WriteInt(output, 4);
+    WriteInt(output, 1);
+
+    WriteInt(output, m_textures.size());
+    for (Texture const& texture : m_textures)
+    {
+        WriteAscii(output, texture.m_name);
+        WriteInt(output, texture.m_width);
+        WriteInt(output, texture.m_height);
+    }
+
+    WriteInt(output, m_buttonData.size() + 18 + m_data.size());
+    for (Data const& data : m_buttonData)
+    {
+        data.Write(output, 0);
+    }
+    fseek(output, 0x18 * 18, SEEK_CUR);
+    for (Data const& data : m_data)
+    {
+        data.Write(output, 0x1500);
+    }
+
+    fclose(output);
+
+    FILE* output2;
+    fopen_s(&output2, (_path + "/All.fco").c_str(), "wb");
+
+    WriteInt(output2, 4);
+    WriteInt(output2, 1);
+    WriteInt(output2, 1);
+    WriteAscii(output2, "All");
+
+    WriteInt(output2, 1);
+    WriteAscii(output2, "direct");
+
+    uint32_t index = 0x82;
+    string list = " ?0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz!?,.:;'\"/-+*#$%&()=[]<>@";
+    WriteInt(output2, m_data.size());
+    for (size_t i = 0; i < m_data.size(); i++)
+    {
+        if (i < list.size())
+        {
+            WriteAscii(output2, list.substr(i, 1));
+        }
+        else
+        {
+            WriteAscii(output2, "?");
+        }
+        WriteInt(output2, 1);
+        WriteInt(output2, index);
+        WriteInt(output2, 0);
+        WriteInt(output2, 0);
+        WriteInt(output2, 0);
+        index++;
+    }
+
+    fclose(output2);
+
+    return true;
 }
 
+
+void fte::Data::Read(FILE *_file)
+{
+    m_textureIndex = ReadInt(_file);
+    m_left = ReadFloat(_file);
+    m_top = ReadFloat(_file);
+    m_right = ReadFloat(_file);
+    m_bottom = ReadFloat(_file);
+    fread(&m_wchar, 2, 1, _file);
+    m_wchar = _byteswap_ushort(m_wchar);
+    fseek(_file, 0x2, SEEK_CUR);
+}
+
+void fte::Data::Write(FILE *_file, uint16_t unknown) const
+{
+    WriteInt(_file, m_textureIndex);
+    WriteFloat(_file, m_left);
+    WriteFloat(_file, m_top);
+    WriteFloat(_file, m_right);
+    WriteFloat(_file, m_bottom);
+    wchar_t flipped_wchar = _byteswap_ushort(m_wchar);
+    fwrite(&flipped_wchar, 2, 1, _file);
+    fwrite(&unknown, 2, 1, _file);
+}

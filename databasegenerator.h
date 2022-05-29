@@ -7,6 +7,7 @@
 #include <QFontDatabase>
 #include <QGraphicsScene>
 #include <QGraphicsPixmapItem>
+#include <QImageReader>
 #include <QMessageBox>
 #include <QSettings>
 #include <QSpinBox>
@@ -70,10 +71,12 @@ public:
 
     void closeEvent (QCloseEvent *event);
 
+    void Reset();
     void ClearGraphicScene();
-    void UpdateFontTextures();
+    void UpdateFontTextures(bool setToZero = true);
     void UpdateDrawButtonTexture();
     void UpdateDrawFontTexture(int id);
+    void UpdateExportEnabled();
 
 private slots:
     void on_PB_Import_clicked();
@@ -88,6 +91,7 @@ private slots:
     void on_SB_Spacing_valueChanged(int arg1);
     void on_SB_OffsetX_valueChanged(int arg1);
     void on_SB_OffsetY_valueChanged(int arg1);
+    void on_TE_Characters_textChanged();
 
     void on_RB_Button_toggled(bool checked);
     void on_RB_Font_toggled(bool checked);
@@ -103,6 +107,7 @@ private:
 
     QFont m_font;
     QGraphicsScene* m_graphic;
+    QImage m_buttonImage;
     QGraphicsPixmapItem* m_buttonPixmap;
     QGraphicsRectItem* m_buttonHighlightPixmap[BT_COUNT];
     QVector<FontTextureData> m_fontTextures;

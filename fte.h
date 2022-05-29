@@ -18,28 +18,39 @@ public:
         float m_right;
         float m_bottom;
         wchar_t m_wchar;
+
+    public:
+        void Read(FILE* _file);
+        void Write(FILE* _file, uint16_t unknown) const;
+    };
+
+    struct Texture
+    {
+        string m_name;
+        uint32_t m_width;
+        uint32_t m_height;
     };
 
     fte();
 
     // Import & Export
     bool Import(string const& _fileName, string& _errorMsg);
-    bool Export(string const& _fileName, string& _errorMsg);
+    bool Export(string const& _path, string& _errorMsg);
 
 private:
     // Reading from bytes
-    unsigned int ReadInt(FILE* _file);
-    float ReadFloat(FILE* _file);
-    string ReadAscii(FILE* _file);
+    static unsigned int ReadInt(FILE* _file);
+    static float ReadFloat(FILE* _file);
+    static string ReadAscii(FILE* _file);
 
     // Writing bytes
-    void WriteInt(FILE* _file, unsigned int _writeInt);
-    void WriteFloat(FILE* _file, float _writeFloat);
-    void WriteAscii(FILE* _file, string _writeString);
+    static void WriteInt(FILE* _file, unsigned int _writeInt);
+    static void WriteFloat(FILE* _file, float _writeFloat);
+    static void WriteAscii(FILE* _file, string _writeString);
 
 public:
     string m_buttonTextureName;
-    vector<string> m_textureNames;
+    vector<Texture> m_textures;
 
     vector<Data> m_buttonData;
     vector<Data> m_data;
