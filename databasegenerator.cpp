@@ -434,7 +434,7 @@ void DatabaseGenerator::on_RB_Font_toggled(bool checked)
 {
     if (checked)
     {
-        if (ui->RB_ModeNew->isChecked() && ui->LE_Font->text().isEmpty())
+        if (ui->RB_ModeNew->isChecked() && ui->LE_Font->text().isEmpty() && m_fte.IsLoaded())
         {
             QMessageBox::warning(this, "Font Texture", "Please import a font first!");
             ui->RB_Button->setChecked(true);
@@ -467,7 +467,7 @@ void DatabaseGenerator::on_Preview_pressed(QPoint pos)
         int index = ui->SB_FontIndex->value();
         if (index < m_fontTextures.size())
         {
-            qDebug() << pos;
+            //qDebug() << pos;
             FontTextureData const& fontTex = m_fontTextures[index];
             for (CharacterData const& data : fontTex.m_characterData)
             {
@@ -481,6 +481,26 @@ void DatabaseGenerator::on_Preview_pressed(QPoint pos)
     }
 
     SetSelected(nullptr);
+}
+
+void DatabaseGenerator::on_SB_SelectedX_valueChanged(int arg1)
+{
+    UpdateCharacterData();
+}
+
+void DatabaseGenerator::on_SB_SelectedY_valueChanged(int arg1)
+{
+    UpdateCharacterData();
+}
+
+void DatabaseGenerator::on_SB_SelectedWidth_valueChanged(int arg1)
+{
+    UpdateCharacterData();
+}
+
+void DatabaseGenerator::on_SB_SelectedHeight_valueChanged(int arg1)
+{
+    UpdateCharacterData();
 }
 
 void DatabaseGenerator::ClearGraphicScene()
@@ -572,6 +592,11 @@ void DatabaseGenerator::SetSelected(const CharacterData *data)
         FontTextureData const& fontTex = m_fontTextures[ui->SB_FontIndex->value()];
         QSize size = fontTex.m_texture.size();
 
+        ui->SB_SelectedX->blockSignals(true);
+        ui->SB_SelectedY->blockSignals(true);
+        ui->SB_SelectedWidth->blockSignals(true);
+        ui->SB_SelectedHeight->blockSignals(true);
+
         ui->SB_SelectedX->setRange(0, size.width());
         ui->SB_SelectedY->setRange(0, size.height());
         ui->SB_SelectedWidth->setRange(0, size.width());
@@ -581,6 +606,11 @@ void DatabaseGenerator::SetSelected(const CharacterData *data)
         ui->SB_SelectedY->setValue(data->m_y);
         ui->SB_SelectedWidth->setValue(data->m_width);
         ui->SB_SelectedHeight->setValue(data->m_height);
+
+        ui->SB_SelectedX->blockSignals(false);
+        ui->SB_SelectedY->blockSignals(false);
+        ui->SB_SelectedWidth->blockSignals(false);
+        ui->SB_SelectedHeight->blockSignals(false);
 
         ui->SB_SelectedX->setEnabled(true);
         ui->SB_SelectedY->setEnabled(true);
@@ -601,6 +631,34 @@ void DatabaseGenerator::SetSelected(const CharacterData *data)
     if (charPrev != m_selectedChar)
     {
         UpdateFontHighlight(ui->SB_FontIndex->value());
+    }
+}
+
+void DatabaseGenerator::UpdateCharacterData()
+{
+    if (m_selectedChar == QChar(0)) return;
+
+    bool found = false;
+    int index = ui->SB_FontIndex->value();
+    if (index < m_fontTextures.size())
+    {
+        FontTextureData& fontTex = m_fontTextures[index];
+        for (CharacterData& data : fontTex.m_characterData)
+        {
+            if (data.m_char == m_selectedChar)
+            {
+                found = true;
+                data.m_x = ui->SB_SelectedX->value();
+                data.m_y = ui->SB_SelectedY->value();
+                data.m_width = ui->SB_SelectedWidth->value();
+                data.m_height = ui->SB_SelectedHeight->value();
+            }
+        }
+    }
+
+    if (found)
+    {
+        UpdateFontHighlight(index);
     }
 }
 
@@ -680,6 +738,7 @@ void DatabaseGenerator::UpdateFontTextures(bool setToZero)
 
     ui->SB_FontIndex->setMaximum(m_fontTextures.size() - 1);
     UpdateDrawFontTexture(setToZero ? 0 : ui->SB_FontIndex->value());
+    SetSelected(nullptr);
 }
 
 void DatabaseGenerator::UpdateDrawButtonTexture()

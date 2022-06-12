@@ -84,6 +84,7 @@ public:
     void LoadFontTextures();
     void UpdateFontHighlight(int id);
     void SetSelected(CharacterData const* data);
+    void UpdateCharacterData();
 
     void UpdateFontTextures(bool setToZero = true);
     void UpdateDrawButtonTexture();
@@ -114,6 +115,11 @@ private slots:
     void on_SB_FontIndex_valueChanged(int arg1);
 
     void on_Preview_pressed(QPoint pos);
+
+    void on_SB_SelectedX_valueChanged(int arg1);
+    void on_SB_SelectedY_valueChanged(int arg1);
+    void on_SB_SelectedWidth_valueChanged(int arg1);
+    void on_SB_SelectedHeight_valueChanged(int arg1);
 
 private:
     Ui::DatabaseGenerator *ui;
