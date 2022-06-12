@@ -9,6 +9,7 @@ DatabaseGenerator::DatabaseGenerator(QWidget *parent) :
 
     m_graphic = new QGraphicsScene(this);
     ui->GV_Preview->setScene(m_graphic);
+    connect(ui->GV_Preview, SIGNAL(previewScreenPressed(QPoint)), this, SLOT(on_Preview_pressed(QPoint)));
     m_buttonPixmap = Q_NULLPTR;
 
     m_settings = new QSettings("brianuuu", "fcoEditor", this);
@@ -61,7 +62,7 @@ bool DatabaseGenerator::CofirmChangeMode()
 
 void DatabaseGenerator::Reset()
 {
-    m_fte = fte();
+    m_fte.Reset();
 
     ClearGraphicScene();
     for (int i = 0; i < BT_COUNT; i++)
@@ -75,7 +76,13 @@ void DatabaseGenerator::Reset()
     ui->LE_Font->clear();
     ui->LE_ButtonTexture->clear();
     ui->TE_Characters->clear();
+    ui->RB_Button->setChecked(true);
 
+    m_fontTextures.clear();
+    ui->SB_FontIndex->setMaximum(0);
+
+    ui->PB_Texture->setEnabled(false);
+    ui->PB_Font->setEnabled(false);
     ui->PB_Export->setEnabled(false);
     ui->PB_Export->setText(ui->RB_ModeEdit->isChecked() ? "Export .fte" : "Export .fte and Textures");
     ui->TE_Characters->setReadOnly(ui->RB_ModeEdit->isChecked());
@@ -86,6 +93,7 @@ void DatabaseGenerator::on_RB_ModeEdit_clicked()
     if (CofirmChangeMode())
     {
         Reset();
+        ui->Group_NewFont->setHidden(true);
     }
     else
     {
@@ -98,6 +106,7 @@ void DatabaseGenerator::on_RB_ModeNew_clicked()
     if (CofirmChangeMode())
     {
         Reset();
+        ui->Group_NewFont->setHidden(false);
     }
     else
     {
@@ -136,7 +145,16 @@ void DatabaseGenerator::on_PB_Import_clicked()
         }
         ui->TE_Characters->setText(characters);
 
-        UpdateFontTextures();
+        bool editMode = ui->RB_ModeEdit->isChecked();
+        ui->PB_Font->setEnabled(!editMode);
+        if (editMode)
+        {
+            LoadFontTextures();
+        }
+        else
+        {
+            UpdateFontTextures();
+        }
     }
 }
 
@@ -152,61 +170,115 @@ void DatabaseGenerator::on_PB_Export_clicked()
     if (dir == Q_NULLPTR) return;
     m_ftePath = dir;
 
-    uint32_t textureIndex = 0;
-    m_fte.m_data.clear();
-    m_fte.m_textures.clear();
-    for (int i = 0; i < m_fontTextures.size(); i++)
+    if (ui->RB_ModeNew->isChecked())
     {
-        FontTextureData const& fontTex = m_fontTextures[i];
-        QSize size = fontTex.m_texture.size();
-        for (CharacterData const& characterData : fontTex.m_characterData)
+        uint32_t textureIndex = 0;
+        m_fte.m_data.clear();
+        m_fte.m_textures.clear();
+        for (int i = 0; i < m_fontTextures.size(); i++)
         {
-            fte::Data data;
-            data.m_left = characterData.m_x / float(size.width());
-            data.m_top = characterData.m_y / float(size.height());
-            data.m_right = (characterData.m_x + characterData.m_width) / float(size.width());
-            data.m_bottom = (characterData.m_y + characterData.m_height) / float(size.height());
-            data.m_textureIndex = textureIndex;
-            data.m_wchar = characterData.m_char.unicode();
-            m_fte.m_data.push_back(data);
+            FontTextureData const& fontTex = m_fontTextures[i];
+            QSize size = fontTex.m_texture.size();
+            for (CharacterData const& characterData : fontTex.m_characterData)
+            {
+                fte::Data data;
+                data.m_left = characterData.m_x / float(size.width());
+                data.m_top = characterData.m_y / float(size.height());
+                data.m_right = (characterData.m_x + characterData.m_width) / float(size.width());
+                data.m_bottom = (characterData.m_y + characterData.m_height) / float(size.height());
+                data.m_textureIndex = textureIndex;
+                data.m_wchar = characterData.m_char.unicode();
+                m_fte.m_data.push_back(data);
+            }
+
+            QString name = "All_" + QStringLiteral("%1").arg(i, 3, 10, QLatin1Char('0'));
+            fontTex.m_texture.save(dir + "/" + name + ".dds");
+            fte::Texture texture;
+            texture.m_name = name.toStdString();
+            texture.m_width = uint32_t(size.width());
+            texture.m_height = uint32_t(size.height());
+            m_fte.m_textures.push_back(texture);
+            textureIndex++;
         }
 
-        QString name = "All_" + QStringLiteral("%1").arg(i, 3, 10, QLatin1Char('0'));
-        fontTex.m_texture.save(dir + "/" + name + ".dds");
+        m_fte.m_buttonData.clear();
+        QSize size = m_buttonImage.size();
+        for (int i = 0; i < BT_COUNT; i++)
+        {
+            QSpinBox* x = qobject_cast<QSpinBox*>(ui->GL_Button->itemAtPosition(i + 1, CT_X)->widget());
+            QSpinBox* y = qobject_cast<QSpinBox*>(ui->GL_Button->itemAtPosition(i + 1, CT_Y)->widget());
+            QSpinBox* width = qobject_cast<QSpinBox*>(ui->GL_Button->itemAtPosition(i + 1, CT_Width)->widget());
+            QSpinBox* height = qobject_cast<QSpinBox*>(ui->GL_Button->itemAtPosition(i + 1, CT_Height)->widget());
+
+            fte::Data data;
+            data.m_left = x->value() / float(size.width());
+            data.m_top = y->value() / float(size.height());
+            data.m_right = (x->value() + width->value()) / float(size.width());
+            data.m_bottom = (y->value() + height->value()) / float(size.height());
+            data.m_textureIndex = textureIndex;
+            data.m_wchar = 0;
+            m_fte.m_buttonData.push_back(data);
+        }
+
+        m_buttonImage.save(dir + "/" + ui->LE_ButtonTexture->text() + ".dds");
         fte::Texture texture;
-        texture.m_name = name.toStdString();
+        texture.m_name = ui->LE_ButtonTexture->text().toStdString();
         texture.m_width = uint32_t(size.width());
         texture.m_height = uint32_t(size.height());
         m_fte.m_textures.push_back(texture);
         textureIndex++;
     }
-
-    m_fte.m_buttonData.clear();
-    QSize size = m_buttonImage.size();
-    for (int i = 0; i < BT_COUNT; i++)
+    else
     {
-        QSpinBox* x = qobject_cast<QSpinBox*>(ui->GL_Button->itemAtPosition(i + 1, CT_X)->widget());
-        QSpinBox* y = qobject_cast<QSpinBox*>(ui->GL_Button->itemAtPosition(i + 1, CT_Y)->widget());
-        QSpinBox* width = qobject_cast<QSpinBox*>(ui->GL_Button->itemAtPosition(i + 1, CT_Width)->widget());
-        QSpinBox* height = qobject_cast<QSpinBox*>(ui->GL_Button->itemAtPosition(i + 1, CT_Height)->widget());
+        int index = 0x82;
+        for (fte::Data& data : m_fte.m_data)
+        {
+            // Find the character we want
+            bool found = false;
+            for (FontTextureData const& fontTextures : m_fontTextures)
+            {
+                for (CharacterData const& characterData : fontTextures.m_characterData)
+                {
+                    if (index == characterData.m_databaseIndex)
+                    {
+                        QSize size = fontTextures.m_texture.size();
+                        data.m_left = characterData.m_x / float(size.width());
+                        data.m_top = characterData.m_y / float(size.height());
+                        data.m_right = (characterData.m_x + characterData.m_width) / float(size.width());
+                        data.m_bottom = (characterData.m_y + characterData.m_height) / float(size.height());
 
-        fte::Data data;
-        data.m_left = x->value() / float(size.width());
-        data.m_top = y->value() / float(size.height());
-        data.m_right = (x->value() + width->value()) / float(size.width());
-        data.m_bottom = (y->value() + height->value()) / float(size.height());
-        data.m_textureIndex = textureIndex;
-        data.m_wchar = 0;
-        m_fte.m_buttonData.push_back(data);
+                        found = true;
+                        break;
+                    }
+                }
+
+                if (found) break;
+            }
+
+            if (!found)
+            {
+                // We really shouldn't be here
+                QMessageBox::critical(this, "Export .fte", "Unable to find data for character '" + QString::fromWCharArray(&data.m_wchar, 1) + "'");
+            }
+
+            index++;
+        }
+
+        QSize size = m_buttonImage.size();
+        for (int i = 0; i < BT_COUNT; i++)
+        {
+            QSpinBox* x = qobject_cast<QSpinBox*>(ui->GL_Button->itemAtPosition(i + 1, CT_X)->widget());
+            QSpinBox* y = qobject_cast<QSpinBox*>(ui->GL_Button->itemAtPosition(i + 1, CT_Y)->widget());
+            QSpinBox* width = qobject_cast<QSpinBox*>(ui->GL_Button->itemAtPosition(i + 1, CT_Width)->widget());
+            QSpinBox* height = qobject_cast<QSpinBox*>(ui->GL_Button->itemAtPosition(i + 1, CT_Height)->widget());
+
+            fte::Data& data = m_fte.m_buttonData[size_t(i)];
+            data.m_left = x->value() / float(size.width());
+            data.m_top = y->value() / float(size.height());
+            data.m_right = (x->value() + width->value()) / float(size.width());
+            data.m_bottom = (y->value() + height->value()) / float(size.height());
+        }
     }
-
-    m_buttonImage.save(dir + "/" + ui->LE_ButtonTexture->text() + ".dds");
-    fte::Texture texture;
-    texture.m_name = ui->LE_ButtonTexture->text().toStdString();
-    texture.m_width = uint32_t(size.width());
-    texture.m_height = uint32_t(size.height());
-    m_fte.m_textures.push_back(texture);
-    textureIndex++;
 
     string errorMsg;
     m_fte.Export(dir.toStdString(), errorMsg);
@@ -285,8 +357,7 @@ void DatabaseGenerator::on_PB_Texture_clicked()
     UpdateExportEnabled();
     if (!m_fte.m_buttonData.empty())
     {
-        fte::Data const& data = m_fte.m_buttonData[0];
-        m_fte.m_textures[data.m_textureIndex].m_name = textureName.toStdString();
+        m_fte.m_textures[m_fte.m_buttonTextureIndex].m_name = textureName.toStdString();
     }
 
     ClearGraphicScene();
@@ -355,6 +426,7 @@ void DatabaseGenerator::on_RB_Button_toggled(bool checked)
     if (checked)
     {
         UpdateDrawButtonTexture();
+        SetSelected(nullptr);
     }
 }
 
@@ -362,7 +434,7 @@ void DatabaseGenerator::on_RB_Font_toggled(bool checked)
 {
     if (checked)
     {
-        if (ui->LE_Font->text().isEmpty())
+        if (ui->RB_ModeNew->isChecked() && ui->LE_Font->text().isEmpty())
         {
             QMessageBox::warning(this, "Font Texture", "Please import a font first!");
             ui->RB_Button->setChecked(true);
@@ -376,6 +448,39 @@ void DatabaseGenerator::on_RB_Font_toggled(bool checked)
 void DatabaseGenerator::on_SB_FontIndex_valueChanged(int arg1)
 {
     UpdateDrawFontTexture(arg1);
+    SetSelected(nullptr);
+}
+
+void DatabaseGenerator::on_Preview_pressed(QPoint pos)
+{
+    if (m_graphic->sceneRect().width() * ui->GV_Preview->getScele() < ui->GV_Preview->rect().width())
+    {
+        pos.rx() -= int(( ui->GV_Preview->rect().width() - m_graphic->sceneRect().width() * ui->GV_Preview->getScele()) / 2.0 / ui->GV_Preview->getScele());
+    }
+    if (m_graphic->sceneRect().height() * ui->GV_Preview->getScele() < ui->GV_Preview->rect().height())
+    {
+        pos.ry() -= int(( ui->GV_Preview->rect().height() - m_graphic->sceneRect().height() * ui->GV_Preview->getScele()) / 2.0 / ui->GV_Preview->getScele());
+    }
+
+    if (ui->RB_Font->isChecked())
+    {
+        int index = ui->SB_FontIndex->value();
+        if (index < m_fontTextures.size())
+        {
+            qDebug() << pos;
+            FontTextureData const& fontTex = m_fontTextures[index];
+            for (CharacterData const& data : fontTex.m_characterData)
+            {
+                if (pos.x() >= data.m_x && pos.x() < data.m_x + data.m_width && pos.y() >= data.m_y && pos.y() < data.m_y + data.m_height)
+                {
+                    SetSelected(&data);
+                    return;
+                }
+            }
+        }
+    }
+
+    SetSelected(nullptr);
 }
 
 void DatabaseGenerator::ClearGraphicScene()
@@ -385,6 +490,117 @@ void DatabaseGenerator::ClearGraphicScene()
     for (int i = 0; i < BT_COUNT; i++)
     {
         m_buttonHighlightPixmap[i] = Q_NULLPTR;
+    }
+}
+
+void DatabaseGenerator::LoadFontTextures()
+{
+    m_fontTextures.clear();
+    int textureIndex = 0;
+    QMap<uint32_t, int> fteTextureIndexMap;
+
+    ui->LE_ButtonTexture->clear();
+    int databaseIndex = 0x82;
+    for (fte::Data const& data : m_fte.m_data)
+    {
+        if (!fteTextureIndexMap.contains(data.m_textureIndex))
+        {
+            // Load new texture
+            fteTextureIndexMap[data.m_textureIndex] = textureIndex;
+            textureIndex++;
+
+            QString imagePath = m_ftePath + "/" + QString::fromStdString(m_fte.m_textures[data.m_textureIndex].m_name) + ".dds";
+            if (!QFile::exists(imagePath))
+            {
+                QMessageBox::warning(this, "Import", "Unable to find font texture " + imagePath);
+            }
+            else
+            {
+                FontTextureData textureData;
+                textureData.m_texture = QImage(imagePath);
+                m_fontTextures.push_back(textureData);
+            }
+        }
+
+        FontTextureData& textureData = m_fontTextures[fteTextureIndexMap[data.m_textureIndex]];
+        CharacterData characterData;
+        characterData.m_char = QString::fromWCharArray(&data.m_wchar, 1).front();
+        characterData.m_x = qRound(data.m_left * textureData.m_texture.width());
+        characterData.m_y = qRound(data.m_top * textureData.m_texture.height());
+        characterData.m_width = qRound(data.m_right * textureData.m_texture.width() - characterData.m_x);
+        characterData.m_height = qRound(data.m_bottom * textureData.m_texture.height() - characterData.m_y);
+        characterData.m_databaseIndex = databaseIndex;
+        databaseIndex++;
+        textureData.m_characterData.push_back(characterData);
+    }
+
+    ui->SB_FontIndex->setMaximum(m_fontTextures.size() - 1);
+    for (int i = 0; i < m_fontTextures.size(); i++)
+    {
+        UpdateFontHighlight(i);
+    }
+
+    UpdateDrawFontTexture(0);
+    UpdateDrawButtonTexture();
+}
+
+void DatabaseGenerator::UpdateFontHighlight(int id)
+{
+    FontTextureData& textureData = m_fontTextures[id];
+
+    textureData.m_highlight = QImage(textureData.m_texture.width(), textureData.m_texture.height(), QImage::Format_RGBA8888);
+    textureData.m_highlight.fill(0);
+    QPainter painterHighlight(&textureData.m_highlight);
+
+    for (CharacterData const& characterData : textureData.m_characterData)
+    {
+        painterHighlight.setPen(characterData.m_char == m_selectedChar ? COLOR_SELECTED : COLOR_HIGHLIGHT);
+        painterHighlight.drawRect(characterData.m_x, characterData.m_y, characterData.m_width - 1, characterData.m_height - 1);
+    }
+
+    UpdateDrawFontTexture(id);
+}
+
+void DatabaseGenerator::SetSelected(const CharacterData *data)
+{
+    QChar charPrev = m_selectedChar;
+    if (data)
+    {
+        m_selectedChar = data->m_char;
+        ui->L_Selected->setText("Selected (" + QString(m_selectedChar) + ")");
+
+        FontTextureData const& fontTex = m_fontTextures[ui->SB_FontIndex->value()];
+        QSize size = fontTex.m_texture.size();
+
+        ui->SB_SelectedX->setRange(0, size.width());
+        ui->SB_SelectedY->setRange(0, size.height());
+        ui->SB_SelectedWidth->setRange(0, size.width());
+        ui->SB_SelectedHeight->setRange(0, size.height());
+
+        ui->SB_SelectedX->setValue(data->m_x);
+        ui->SB_SelectedY->setValue(data->m_y);
+        ui->SB_SelectedWidth->setValue(data->m_width);
+        ui->SB_SelectedHeight->setValue(data->m_height);
+
+        ui->SB_SelectedX->setEnabled(true);
+        ui->SB_SelectedY->setEnabled(true);
+        ui->SB_SelectedWidth->setEnabled(true);
+        ui->SB_SelectedHeight->setEnabled(true);
+    }
+    else
+    {
+        m_selectedChar = 0;
+        ui->L_Selected->setText("Selected (N/A)");
+
+        ui->SB_SelectedX->setEnabled(false);
+        ui->SB_SelectedY->setEnabled(false);
+        ui->SB_SelectedWidth->setEnabled(false);
+        ui->SB_SelectedHeight->setEnabled(false);
+    }
+
+    if (charPrev != m_selectedChar)
+    {
+        UpdateFontHighlight(ui->SB_FontIndex->value());
     }
 }
 
@@ -405,11 +621,12 @@ void DatabaseGenerator::UpdateFontTextures(bool setToZero)
     QImage highlight(512, 512, QImage::Format_RGBA8888);
     highlight.fill(0);
     QPainter painterHighlight(&highlight);
-    painterHighlight.setPen(Qt::red);
+    painterHighlight.setPen(COLOR_HIGHLIGHT);
 
     int countY = 0;
     QString allCharacters = ui->TE_Characters->toPlainText();
     FontTextureData data;
+    int databaseIndex = 0x82;
     while (!allCharacters.isEmpty())
     {
         QString subCharacters;
@@ -432,6 +649,8 @@ void DatabaseGenerator::UpdateFontTextures(bool setToZero)
                 characterData.m_y = countY * fontMetrics.height();
                 characterData.m_width = posXEnd - posXStart;
                 characterData.m_height = fontMetrics.height();
+                characterData.m_databaseIndex = databaseIndex;
+                databaseIndex++;
                 data.m_characterData.push_back(characterData);
                 painterHighlight.drawRect(characterData.m_x, characterData.m_y, characterData.m_width - 1, characterData.m_height - 1);
 
@@ -498,6 +717,7 @@ void DatabaseGenerator::UpdateDrawButtonTexture()
 
                 ClearGraphicScene();
                 m_buttonPixmap = m_graphic->addPixmap(QPixmap::fromImage(m_buttonImage));
+                ui->PB_Texture->setEnabled(ui->RB_ModeNew->isChecked());
             }
         }
 
@@ -515,7 +735,7 @@ void DatabaseGenerator::UpdateDrawButtonTexture()
         y->setValue(qRound(data.m_top * buttonImageHeight));
         width->setValue(qRound(data.m_right * buttonImageWidth - x->value()));
         height->setValue(qRound(data.m_bottom * buttonImageHeight - y->value()));
-        m_buttonHighlightPixmap[i] = m_graphic->addRect(x->value() + 0.5, y->value() + 0.5, width->value() - 1, height->value() - 1, QPen(Qt::red));
+        m_buttonHighlightPixmap[i] = m_graphic->addRect(x->value() + 0.5, y->value() + 0.5, width->value() - 1, height->value() - 1, QPen(COLOR_HIGHLIGHT));
     }
 
     UpdateExportEnabled();
@@ -537,5 +757,5 @@ void DatabaseGenerator::UpdateDrawFontTexture(int id)
 
 void DatabaseGenerator::UpdateExportEnabled()
 {
-    ui->PB_Export->setEnabled(!ui->LE_Font->text().isEmpty() && !ui->LE_ButtonTexture->text().isEmpty());
+    ui->PB_Export->setEnabled((ui->RB_ModeEdit->isChecked() && m_fte.IsLoaded()) || (!ui->LE_Font->text().isEmpty() && !ui->LE_ButtonTexture->text().isEmpty()));
 }

@@ -15,6 +15,7 @@ public:
     explicit ZoomGraphicsView(QWidget *parent = nullptr);
 
     void wheelEvent(QWheelEvent *event) override;
+    double getScele() { return m_currentScale; }
 
 protected:
     virtual void mousePressEvent(QMouseEvent *event) override;

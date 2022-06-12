@@ -14,6 +14,9 @@
 
 #include "fte.h"
 
+#define COLOR_HIGHLIGHT QColor::fromRgb(255, 0, 0, 150)
+#define COLOR_SELECTED QColor::fromRgb(0, 255, 0, 255)
+
 namespace Ui {
 class DatabaseGenerator;
 }
@@ -57,6 +60,7 @@ public:
         int m_y;
         int m_width;
         int m_height;
+        int m_databaseIndex;
     };
 
     struct FontTextureData
@@ -75,6 +79,12 @@ public:
     bool CofirmChangeMode();
     void Reset();
     void ClearGraphicScene();
+
+    // Edit mode only
+    void LoadFontTextures();
+    void UpdateFontHighlight(int id);
+    void SetSelected(CharacterData const* data);
+
     void UpdateFontTextures(bool setToZero = true);
     void UpdateDrawButtonTexture();
     void UpdateDrawFontTexture(int id);
@@ -103,6 +113,8 @@ private slots:
     void on_RB_Font_toggled(bool checked);
     void on_SB_FontIndex_valueChanged(int arg1);
 
+    void on_Preview_pressed(QPoint pos);
+
 private:
     Ui::DatabaseGenerator *ui;
     QSettings *m_settings;
@@ -112,6 +124,7 @@ private:
     QString m_ftePath;
     QString m_texturePath;
     QString m_fontPath;
+    QChar m_selectedChar;
 
     QFont m_font;
     QGraphicsScene* m_graphic;

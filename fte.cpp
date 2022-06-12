@@ -196,7 +196,7 @@ bool fte::Export(const string &_path, string &_errorMsg)
         WriteInt(output, texture.m_height);
     }
 
-    WriteInt(output, m_buttonData.size() + 18 + m_data.size());
+    WriteInt(output, m_buttonData.size() + 17 + m_data.size());
     uint32_t index = 0x64;
     for (Data const& data : m_buttonData)
     {
