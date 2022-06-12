@@ -37,6 +37,7 @@ public:
         BT_Back,
         BT_LStick,
         BT_RStick,
+        BT_DPad,
 
         BT_COUNT
     };

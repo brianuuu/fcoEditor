@@ -480,9 +480,9 @@ void DatabaseGenerator::UpdateDrawButtonTexture()
     {
         fte::Data const& data = m_fte.m_buttonData[i];
 
-        if (ui->LE_ButtonTexture->text().isEmpty())
+        if (ui->LE_ButtonTexture->text().isEmpty() && m_fte.m_buttonTextureIndex != 0xFFFFFFFF)
         {
-            ui->LE_ButtonTexture->setText(QString::fromStdString(m_fte.m_textures[data.m_textureIndex].m_name));
+            ui->LE_ButtonTexture->setText(QString::fromStdString(m_fte.m_textures[m_fte.m_buttonTextureIndex].m_name));
             QString buttonImagePath = m_texturePath + "/" + ui->LE_ButtonTexture->text() + ".dds";
             if (!QFile::exists(buttonImagePath))
             {

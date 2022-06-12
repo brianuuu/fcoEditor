@@ -13,7 +13,15 @@
 
 fte::fte()
 {
+    Reset();
+}
 
+void fte::Reset()
+{
+    m_buttonTextureIndex = 0xFFFFFFFF;
+    m_textures.clear();
+    m_buttonData.clear();
+    m_data.clear();
 }
 
 //-----------------------------------------------------
@@ -123,10 +131,7 @@ void fte::WriteAscii
 
 bool fte::Import(const string &_fileName, string &_errorMsg)
 {
-    m_buttonTextureName.clear();
-    m_textures.clear();
-    m_buttonData.clear();
-    m_data.clear();
+    Reset();
 
     FILE* fteFile;
     fopen_s(&fteFile, _fileName.c_str(), "rb");
@@ -150,27 +155,25 @@ bool fte::Import(const string &_fileName, string &_errorMsg)
     }
 
     uint32_t characterCount = ReadInt(fteFile);
-    m_buttonData.reserve(12);
-    m_data.reserve(characterCount - 30);
+    m_buttonData.reserve(13);
+    m_data.reserve(characterCount - 29);
+    uint32_t index = 0x64; // A button
     for (uint32_t i = 0; i < characterCount; i++)
     {
-        if (i >= 12 && i < 30)
-        {
-            fseek(fteFile, 0x18, SEEK_CUR);
-            continue;
-        }
-
         Data data;
         data.Read(fteFile);
 
-        if (i < 12)
+        if (index <= 0x6F || index == 0x78)
         {
             m_buttonData.push_back(data);
+            m_buttonTextureIndex = data.m_textureIndex;
         }
-        else
+        else if (index >= 0x82)
         {
             m_data.push_back(data);
         }
+
+        index++;
     }
 
     fclose(fteFile);
@@ -194,14 +197,31 @@ bool fte::Export(const string &_path, string &_errorMsg)
     }
 
     WriteInt(output, m_buttonData.size() + 18 + m_data.size());
+    uint32_t index = 0x64;
     for (Data const& data : m_buttonData)
     {
+        // Skip to DPad
+        while (index > 0x6F && index < 0x78)
+        {
+            fseek(output, 0x18, SEEK_CUR);
+            index++;
+        }
+
         data.Write(output, 0);
+        index++;
     }
-    fseek(output, 0x18 * 18, SEEK_CUR);
+
+    // Skip to characters
+    while (index < 0x82)
+    {
+        fseek(output, 0x18, SEEK_CUR);
+        index++;
+    }
+
     for (Data const& data : m_data)
     {
         data.Write(output, 0x1500);
+        index++;
     }
 
     fclose(output);
@@ -217,7 +237,7 @@ bool fte::Export(const string &_path, string &_errorMsg)
     WriteInt(output2, 1);
     WriteAscii(output2, "direct");
 
-    uint32_t index = 0x82;
+    index = 0x82;
     string list = " ?0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz!?,.:;'\"/-+*#$%&()=[]<>@";
     WriteInt(output2, m_data.size());
     for (size_t i = 0; i < m_data.size(); i++)

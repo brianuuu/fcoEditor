@@ -32,6 +32,7 @@ public:
     };
 
     fte();
+    void Reset();
     bool IsLoaded() { return !m_data.empty(); }
 
     // Import & Export
@@ -52,7 +53,7 @@ private:
     static void WriteAscii(FILE* _file, string _writeString);
 
 public:
-    string m_buttonTextureName;
+    uint32_t m_buttonTextureIndex;
     vector<Texture> m_textures;
 
     vector<Data> m_buttonData;
