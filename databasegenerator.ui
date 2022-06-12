@@ -346,6 +346,16 @@
             <item>
              <widget class="QTextEdit" name="TE_Characters"/>
             </item>
+            <item>
+             <widget class="QPushButton" name="PB_ExportDatabase">
+              <property name="enabled">
+               <bool>false</bool>
+              </property>
+              <property name="text">
+               <string>Export fcoDatabase.txt</string>
+              </property>
+             </widget>
+            </item>
            </layout>
           </widget>
          </item>

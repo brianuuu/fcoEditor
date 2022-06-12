@@ -92,6 +92,7 @@ private slots:
     void on_SB_OffsetX_valueChanged(int arg1);
     void on_SB_OffsetY_valueChanged(int arg1);
     void on_TE_Characters_textChanged();
+    void on_PB_ExportDatabase_clicked();
 
     void on_RB_Button_toggled(bool checked);
     void on_RB_Font_toggled(bool checked);

@@ -195,6 +195,22 @@ void DatabaseGenerator::on_SB_OffsetY_valueChanged(int arg1)
 void DatabaseGenerator::on_TE_Characters_textChanged()
 {
     UpdateFontTextures(false);
+    ui->PB_ExportDatabase->setEnabled(!ui->TE_Characters->toPlainText().isEmpty());
+}
+
+void DatabaseGenerator::on_PB_ExportDatabase_clicked()
+{
+    QMessageBox::StandardButton resBtn = QMessageBox::Yes;
+    QString str = "Generate fcoDatabase.txt with the current character list? This will allow fcoEditor to use the new font database.\n(You must restart fcoEditor after for this to take effect)";
+    resBtn = QMessageBox::warning(this, "Generate fcoDatabase.txt", str, QMessageBox::Yes | QMessageBox::No, QMessageBox::Yes);
+    if (resBtn == QMessageBox::No)
+    {
+        return;
+    }
+
+    QDir::setCurrent(QApplication::applicationDirPath());
+    fte::GenerateFcoDatabase(ui->TE_Characters->toPlainText().toStdWString());
+    QMessageBox::information(this, "Generate fcoDatabase.txt", "New fcoDatabase.txt has been generated, please restart fcoEditor.");
 }
 
 void DatabaseGenerator::on_PB_Texture_clicked()

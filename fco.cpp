@@ -1099,11 +1099,12 @@ void fco::GenerateDatabase()
         fwprintf_s(database, L"00 00 00 6D = \\Back\\\n");
         fwprintf_s(database, L"00 00 00 6E = \\LStick\\\n");
         fwprintf_s(database, L"00 00 00 6F = \\RStick\\\n");
+        fwprintf_s(database, L"00 00 00 78 = \\DPad\\\n");
 
         // Start index
         unsigned int hex = 0x00000082;
 
-        unsigned int index = 1;
+        unsigned int index = 0;
         while (index < utf8Content.size())
         {
             // Mask out four bytes from offset

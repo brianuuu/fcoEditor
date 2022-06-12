@@ -37,6 +37,8 @@ public:
     bool Import(string const& _fileName, string& _errorMsg);
     bool Export(string const& _path, string& _errorMsg);
 
+    static void GenerateFcoDatabase(wstring const& content);
+
 private:
     // Reading from bytes
     static unsigned int ReadInt(FILE* _file);

@@ -243,6 +243,50 @@ bool fte::Export(const string &_path, string &_errorMsg)
     return true;
 }
 
+void fte::GenerateFcoDatabase(const wstring &content)
+{
+    wstring_convert< codecvt_utf8<wchar_t> > utfconv;
+
+    FILE* database;
+    fopen_s(&database, "fcoDatabase.txt", "w+,ccs=UTF-8");
+
+    // Hardcode button special symbols
+    fwprintf_s(database, L"00 00 00 64 = \\A\\\n");
+    fwprintf_s(database, L"00 00 00 65 = \\B\\\n");
+    fwprintf_s(database, L"00 00 00 66 = \\Y\\\n");
+    fwprintf_s(database, L"00 00 00 67 = \\X\\\n");
+    fwprintf_s(database, L"00 00 00 68 = \\LB\\\n");
+    fwprintf_s(database, L"00 00 00 69 = \\RB\\\n");
+    fwprintf_s(database, L"00 00 00 6A = \\LT\\\n");
+    fwprintf_s(database, L"00 00 00 6B = \\RT\\\n");
+    fwprintf_s(database, L"00 00 00 6C = \\Start\\\n");
+    fwprintf_s(database, L"00 00 00 6D = \\Back\\\n");
+    fwprintf_s(database, L"00 00 00 6E = \\LStick\\\n");
+    fwprintf_s(database, L"00 00 00 6F = \\RStick\\\n");
+    fwprintf_s(database, L"00 00 00 78 = \\DPad\\\n");
+
+    // Start index
+    unsigned int hex = 0x00000082;
+
+    unsigned int index = 0;
+    while (index < content.size())
+    {
+        // Mask out four bytes from offset
+        unsigned int intBuffer[4];
+        intBuffer[0] = (hex >> 24) & 0x000000FF;
+        intBuffer[1] = (hex >> 16) & 0x000000FF;
+        intBuffer[2] = (hex >> 8) & 0x000000FF;
+        intBuffer[3] = hex & 0x000000FF;
+
+        wchar_t symbol = content[index];
+        fwprintf_s(database, L"%02X %02X %02X %02X = %c\n", intBuffer[0], intBuffer[1], intBuffer[2], intBuffer[3], symbol);
+
+        index++;
+        hex++;
+    }
+    fclose(database);
+}
+
 
 void fte::Data::Read(FILE *_file)
 {
