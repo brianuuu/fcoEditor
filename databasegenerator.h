@@ -103,8 +103,10 @@ private:
     QSettings *m_settings;
 
     // Members
-    QString m_path;
     fte m_fte;
+    QString m_ftePath;
+    QString m_texturePath;
+    QString m_fontPath;
 
     QFont m_font;
     QGraphicsScene* m_graphic;

@@ -12,7 +12,7 @@ DatabaseGenerator::DatabaseGenerator(QWidget *parent) :
     m_buttonPixmap = Q_NULLPTR;
 
     m_settings = new QSettings("brianuuu", "fcoEditor", this);
-    m_path = m_settings->value("DatabaseDefaultDirectory", QString()).toString();
+    m_ftePath = m_settings->value("DatabaseDefaultDirectory", QString()).toString();
     this->resize(m_settings->value("DatabaseDefaultSize", QSize(1024, 720)).toSize());
 
     for (int i = 0; i < BT_COUNT; i++)
@@ -41,7 +41,7 @@ DatabaseGenerator::~DatabaseGenerator()
 
 void DatabaseGenerator::closeEvent(QCloseEvent *event)
 {
-    m_settings->setValue("DatabaseDefaultDirectory", m_path);
+    m_settings->setValue("DatabaseDefaultDirectory", m_ftePath);
     m_settings->setValue("DatabaseDefaultSize", this->size());
 }
 
@@ -64,9 +64,9 @@ void DatabaseGenerator::Reset()
 void DatabaseGenerator::on_PB_Import_clicked()
 {
     QString path = "";
-    if (!m_path.isEmpty())
+    if (!m_ftePath.isEmpty())
     {
-        path = m_path;
+        path = m_ftePath;
     }
 
     QString fteFile = QFileDialog::getOpenFileName(this, tr("Open"), path, "FTE File (*.fte)");
@@ -74,13 +74,14 @@ void DatabaseGenerator::on_PB_Import_clicked()
 
     // Save directory
     QFileInfo info(fteFile);
-    m_path = info.dir().absolutePath();
+    m_ftePath = info.dir().absolutePath();
 
     // Load fco file
     string errorMsg;
     if (m_fte.Import(fteFile.toStdString(), errorMsg))
     {
         Reset();
+        m_texturePath = m_ftePath;
         UpdateDrawButtonTexture();
 
         QString characters;
@@ -97,14 +98,14 @@ void DatabaseGenerator::on_PB_Import_clicked()
 void DatabaseGenerator::on_PB_Export_clicked()
 {
     QString path = "";
-    if (!m_path.isEmpty())
+    if (!m_ftePath.isEmpty())
     {
-        path = m_path;
+        path = m_ftePath;
     }
 
     QString dir = QFileDialog::getExistingDirectory(this, tr("Open Directory"), path, QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
     if (dir == Q_NULLPTR) return;
-    m_path = dir;
+    m_ftePath = dir;
 
     uint32_t textureIndex = 0;
     m_fte.m_data.clear();
@@ -216,9 +217,9 @@ void DatabaseGenerator::on_PB_ExportDatabase_clicked()
 void DatabaseGenerator::on_PB_Texture_clicked()
 {
     QString path = "";
-    if (!m_path.isEmpty())
+    if (!m_texturePath.isEmpty())
     {
-        path = m_path;
+        path = m_ftePath;
     }
 
     QString ddsFile = QFileDialog::getOpenFileName(this, tr("Open"), path, "DDS File (*.dds)");
@@ -226,7 +227,7 @@ void DatabaseGenerator::on_PB_Texture_clicked()
 
     // Save directory
     QFileInfo info(ddsFile);
-    m_path = info.dir().absolutePath();
+    m_texturePath = info.dir().absolutePath();
 
     // Set dds name
     int index = ddsFile.lastIndexOf('\\');
@@ -250,9 +251,9 @@ void DatabaseGenerator::on_PB_Texture_clicked()
 void DatabaseGenerator::on_PB_Font_clicked()
 {
     QString path = "";
-    if (!m_path.isEmpty())
+    if (!m_fontPath.isEmpty())
     {
-        path = m_path;
+        path = m_ftePath;
     }
 
     QString fontFile = QFileDialog::getOpenFileName(this, tr("Open"), path, "font File (*.otf *.ttf)");
@@ -260,7 +261,7 @@ void DatabaseGenerator::on_PB_Font_clicked()
 
     // Save directory
     QFileInfo info(fontFile);
-    m_path = info.dir().absolutePath();
+    m_fontPath = info.dir().absolutePath();
 
     // Set font name
     int index = fontFile.lastIndexOf('\\');
@@ -316,6 +317,13 @@ void DatabaseGenerator::on_RB_Font_toggled(bool checked)
 {
     if (checked)
     {
+        if (ui->LE_Font->text().isEmpty())
+        {
+            QMessageBox::warning(this, "Font Texture", "Please import a font first!");
+            ui->RB_Button->setChecked(true);
+            return;
+        }
+
         UpdateDrawFontTexture(ui->SB_FontIndex->value());
     }
 }
@@ -430,11 +438,11 @@ void DatabaseGenerator::UpdateDrawButtonTexture()
         if (ui->LE_ButtonTexture->text().isEmpty())
         {
             ui->LE_ButtonTexture->setText(QString::fromStdString(m_fte.m_textures[data.m_textureIndex].m_name));
-            QString buttonImagePath = m_path + "/" + ui->LE_ButtonTexture->text() + ".dds";
+            QString buttonImagePath = m_texturePath + "/" + ui->LE_ButtonTexture->text() + ".dds";
             if (!QFile::exists(buttonImagePath))
             {
                 ui->LE_ButtonTexture->clear();
-                QMessageBox::warning(this, "Import", "Unable to find button texture " + ui->LE_ButtonTexture->text() + ".dds");
+                QMessageBox::warning(this, "Import", "Unable to find button texture " + buttonImagePath);
             }
             else
             {
