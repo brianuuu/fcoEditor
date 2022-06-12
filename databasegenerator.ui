@@ -22,6 +22,46 @@
    <item>
     <layout class="QVBoxLayout" name="verticalLayout">
      <item>
+      <layout class="QHBoxLayout" name="horizontalLayout_7">
+       <item>
+        <widget class="QLabel" name="label_23">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="text">
+          <string>Mode:</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QRadioButton" name="RB_ModeEdit">
+         <property name="text">
+          <string>Edit Existing .fte</string>
+         </property>
+         <attribute name="buttonGroup">
+          <string notr="true">BG_Mode</string>
+         </attribute>
+        </widget>
+       </item>
+       <item>
+        <widget class="QRadioButton" name="RB_ModeNew">
+         <property name="text">
+          <string>Import New Font</string>
+         </property>
+         <property name="checked">
+          <bool>true</bool>
+         </property>
+         <attribute name="buttonGroup">
+          <string notr="true">BG_Mode</string>
+         </attribute>
+        </widget>
+       </item>
+      </layout>
+     </item>
+     <item>
       <layout class="QHBoxLayout" name="horizontalLayout_2">
        <item>
         <widget class="QPushButton" name="PB_Import">
@@ -53,7 +93,7 @@
           <x>0</x>
           <y>0</y>
           <width>304</width>
-          <height>520</height>
+          <height>495</height>
          </rect>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_3">
@@ -377,6 +417,9 @@
          <property name="checked">
           <bool>true</bool>
          </property>
+         <attribute name="buttonGroup">
+          <string notr="true">BG_Texture</string>
+         </attribute>
         </widget>
        </item>
        <item>
@@ -390,6 +433,9 @@
          <property name="text">
           <string>Font Textures</string>
          </property>
+         <attribute name="buttonGroup">
+          <string notr="true">BG_Texture</string>
+         </attribute>
         </widget>
        </item>
        <item>
@@ -430,4 +476,8 @@
  </customwidgets>
  <resources/>
  <connections/>
+ <buttongroups>
+  <buttongroup name="BG_Mode"/>
+  <buttongroup name="BG_Texture"/>
+ </buttongroups>
 </ui>

@@ -71,6 +71,7 @@ public:
 
     void closeEvent (QCloseEvent *event);
 
+    bool CofirmChangeMode();
     void Reset();
     void ClearGraphicScene();
     void UpdateFontTextures(bool setToZero = true);
@@ -79,6 +80,9 @@ public:
     void UpdateExportEnabled();
 
 private slots:
+    void on_RB_ModeEdit_clicked();
+    void on_RB_ModeNew_clicked();
+
     void on_PB_Import_clicked();
     void on_PB_Export_clicked();
 

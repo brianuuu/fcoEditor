@@ -539,6 +539,11 @@ void fcoEditorWindow::on_actionDatabase_Generator_fte_triggered()
         m_databaseGenerator = new DatabaseGenerator();
     }
 
+    if (!m_databaseGenerator->isVisible())
+    {
+        m_databaseGenerator->Reset();
+    }
+
     m_databaseGenerator->show();
     m_databaseGenerator->raise();
 }

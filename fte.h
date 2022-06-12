@@ -32,6 +32,7 @@ public:
     };
 
     fte();
+    bool IsLoaded() { return !m_data.empty(); }
 
     // Import & Export
     bool Import(string const& _fileName, string& _errorMsg);

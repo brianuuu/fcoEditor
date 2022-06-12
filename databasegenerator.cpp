@@ -45,8 +45,24 @@ void DatabaseGenerator::closeEvent(QCloseEvent *event)
     m_settings->setValue("DatabaseDefaultSize", this->size());
 }
 
+bool DatabaseGenerator::CofirmChangeMode()
+{
+    if (!m_fte.IsLoaded()) return true;
+
+    QMessageBox::StandardButton resBtn = QMessageBox::Yes;
+    QString str = "Changing mode will reset everything and unsaved changes will be lost, continue?";
+    resBtn = QMessageBox::warning(this, "Change Mode", str, QMessageBox::Yes | QMessageBox::No, QMessageBox::Yes);
+    if (resBtn == QMessageBox::No)
+    {
+        return false;
+    }
+    return true;
+}
+
 void DatabaseGenerator::Reset()
 {
+    m_fte = fte();
+
     ClearGraphicScene();
     for (int i = 0; i < BT_COUNT; i++)
     {
@@ -59,6 +75,34 @@ void DatabaseGenerator::Reset()
     ui->LE_Font->clear();
     ui->LE_ButtonTexture->clear();
     ui->TE_Characters->clear();
+
+    ui->PB_Export->setEnabled(false);
+    ui->PB_Export->setText(ui->RB_ModeEdit->isChecked() ? "Export .fte" : "Export .fte and Textures");
+    ui->TE_Characters->setReadOnly(ui->RB_ModeEdit->isChecked());
+}
+
+void DatabaseGenerator::on_RB_ModeEdit_clicked()
+{
+    if (CofirmChangeMode())
+    {
+        Reset();
+    }
+    else
+    {
+        ui->RB_ModeNew->setChecked(true);
+    }
+}
+
+void DatabaseGenerator::on_RB_ModeNew_clicked()
+{
+    if (CofirmChangeMode())
+    {
+        Reset();
+    }
+    else
+    {
+        ui->RB_ModeEdit->setChecked(true);
+    }
 }
 
 void DatabaseGenerator::on_PB_Import_clicked()
@@ -76,11 +120,12 @@ void DatabaseGenerator::on_PB_Import_clicked()
     QFileInfo info(fteFile);
     m_ftePath = info.dir().absolutePath();
 
-    // Load fco file
+    Reset();
+
+    // Load fte file
     string errorMsg;
     if (m_fte.Import(fteFile.toStdString(), errorMsg))
     {
-        Reset();
         m_texturePath = m_ftePath;
         UpdateDrawButtonTexture();
 
