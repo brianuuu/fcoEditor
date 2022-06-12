@@ -286,10 +286,10 @@ void DatabaseGenerator::on_PB_Export_clicked()
 
 void DatabaseGenerator::on_SB_FontSize_valueChanged(int arg1)
 {
-    m_font.setPointSize(arg1);
+    m_font.setPixelSize(arg1);
 
     QFontMetrics fontMetrics(m_font);
-    ui->SB_OffsetY->setValue(int(fontMetrics.height() * 20.0f / 28.0f));
+    ui->SB_OffsetY->setValue(int(fontMetrics.height() * 23.0f / 28.0f));
 
     UpdateFontTextures(false);
 }
@@ -388,11 +388,11 @@ void DatabaseGenerator::on_PB_Font_clicked()
     int id = QFontDatabase::addApplicationFont(fontFile);
     QString family = QFontDatabase::applicationFontFamilies(id).at(0);
     m_font = QFont(family);
-    m_font.setPointSize(ui->SB_FontSize->value());
+    m_font.setPixelSize(ui->SB_FontSize->value());
     m_font.setLetterSpacing(QFont::SpacingType::AbsoluteSpacing, ui->SB_Spacing->value());
 
     QFontMetrics fontMetrics(m_font);
-    ui->SB_OffsetY->setValue(int(fontMetrics.height() * 20.0f / 28.0f));
+    ui->SB_OffsetY->setValue(int(fontMetrics.height() * 23.0f / 28.0f));
 
     UpdateFontTextures();
 }
@@ -628,7 +628,7 @@ void DatabaseGenerator::SetSelected(const CharacterData *data)
         ui->SB_SelectedHeight->setEnabled(false);
     }
 
-    if (charPrev != m_selectedChar)
+    if (charPrev != m_selectedChar && ui->RB_Font->isChecked())
     {
         UpdateFontHighlight(ui->SB_FontIndex->value());
     }
@@ -674,7 +674,8 @@ void DatabaseGenerator::UpdateFontTextures(bool setToZero)
 
     m_fontTextures.clear();
     QFontMetrics fontMetrics(m_font);
-    int maxCountY = 512 / fontMetrics.height();
+    int fontHeight = fontMetrics.height() + 1;
+    int maxCountY = 512 / fontHeight;
 
     QImage highlight(512, 512, QImage::Format_RGBA8888);
     highlight.fill(0);
@@ -692,6 +693,7 @@ void DatabaseGenerator::UpdateFontTextures(bool setToZero)
         while (!allCharacters.isEmpty())
         {
             int posXStart = stringWidth;
+            if (posXStart > 0) posXStart += 2;
             int newStringWidth = fontMetrics.horizontalAdvance(allCharacters.front());
             stringWidth = fontMetrics.horizontalAdvance(subCharacters) + newStringWidth;
             if (stringWidth >= 512)
@@ -704,9 +706,9 @@ void DatabaseGenerator::UpdateFontTextures(bool setToZero)
                 CharacterData characterData;
                 characterData.m_char = allCharacters.front();
                 characterData.m_x = posXStart;
-                characterData.m_y = countY * fontMetrics.height();
-                characterData.m_width = posXEnd - posXStart;
-                characterData.m_height = fontMetrics.height();
+                characterData.m_y = countY * fontHeight;
+                characterData.m_width = posXEnd - posXStart + 1;
+                characterData.m_height = fontHeight - 1;
                 characterData.m_databaseIndex = databaseIndex;
                 databaseIndex++;
                 data.m_characterData.push_back(characterData);
@@ -718,7 +720,7 @@ void DatabaseGenerator::UpdateFontTextures(bool setToZero)
         }
 
         // Draw current row
-        painterImage.drawText(ui->SB_OffsetX->value(), countY * fontMetrics.height() + ui->SB_OffsetY->value(), subCharacters);
+        painterImage.drawText(ui->SB_OffsetX->value(), countY * fontHeight + ui->SB_OffsetY->value(), subCharacters);
 
         // Next row
         countY++;
