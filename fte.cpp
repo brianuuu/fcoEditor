@@ -273,8 +273,8 @@ void fte::GenerateFcoDatabase(const wstring &content)
     // Hardcode button special symbols
     fwprintf_s(database, L"00 00 00 64 = \\A\\\n");
     fwprintf_s(database, L"00 00 00 65 = \\B\\\n");
-    fwprintf_s(database, L"00 00 00 66 = \\Y\\\n");
-    fwprintf_s(database, L"00 00 00 67 = \\X\\\n");
+    fwprintf_s(database, L"00 00 00 66 = \\X\\\n");
+    fwprintf_s(database, L"00 00 00 67 = \\Y\\\n");
     fwprintf_s(database, L"00 00 00 68 = \\LB\\\n");
     fwprintf_s(database, L"00 00 00 69 = \\RB\\\n");
     fwprintf_s(database, L"00 00 00 6A = \\LT\\\n");
